@@ -1,0 +1,72 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans", Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
+  font-size: 15pt;
+}
+
+main {
+  max-width: 600px;
+  margin: 10px auto 10px;
+}
+
+section {
+  display: none;
+  max-width: 600px;
+}
+
+h1, h2, h3 {
+  text-align: center;
+}
+
+img {
+  max-width: 100%;
+  height: auto;
+}
+
+section:target {
+  display: block;
+}
+
+form {
+  & button, & input, & textarea {
+    border: 2px solid #888;
+    border-radius: 5px;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans", Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
+    font-size: 15pt;
+  }
+
+  & button {
+    display: block;
+    width: 100%;
+    padding: 10px;
+    margin: 10px;
+  }
+  & input {
+    width: 100%;
+    padding: 10px;
+    margin: 10px;
+  }
+  & textarea {
+    width: 100%;
+    height: 200px;
+    padding: 10px;
+    margin: 10px;
+  }
+}
+
+button:hover {
+  cursor: pointer;
+}
+
+.image-entry {
+  p {
+    text-align: center;
+    font-size: 13pt;
+    color: #555;
+    margin-top: 0px;
+    margin-bottom: 40px;
+  }
+}
