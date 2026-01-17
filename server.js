@@ -113,6 +113,10 @@ const regenerateStaticFiles = () => {
         <div class="image-entry">
           <img src="/images/${xssEscape(image.filename)}" alt="${xssEscape(image.description)}" />
           <p>${xssEscape(image.description)}</p>
+          <form action="/api/delete" method="POST" onsubmit="return confirm('Are you sure you want to delete this image?');">
+            <input type="hidden" name="filename" value="${xssEscape(image.filename)}">
+            <input id="deleteBtn" type="submit" value="[delete]">
+          </form>
         </div>
       `;
     }).join('\n');
@@ -214,6 +218,34 @@ const server = createServer(async (req, res) => {
     });
 
     req.pipe(bb);
+  } else if (req.method === 'POST' && url.pathname === '/api/delete') {
+    let body = '';
+    req.on('data', chunk => {
+      body += chunk.toString();
+    });
+    req.on('end', () => {
+      const params = new URLSearchParams(body);
+      data.servers.forEach(server => {
+        server.images = server.images.filter(image => {
+          if (image.filename === params.get('filename')) {
+            const filePath = join(imagesDir, image.filename);
+            const deletedPath = join(deletedImagesDir, image.filename);
+            fs.renameSync(filePath, deletedPath);
+            return false;
+          }
+          return true;
+        });
+      });
+      data.servers = data.servers.filter(server => server.images.length > 0);
+      regenerateStaticFiles();
+      save();
+      res.statusCode = 303;
+      res.setHeader('Location', '/');
+      res.end();
+    });
+  } else {
+    res.statusCode = 404;
+    res.end('404 Not Found');
   }
 });
 

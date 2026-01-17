@@ -84,6 +84,7 @@ section:not(.main, :target), :root:has(:target) .main {
   display: none;
 }
 
+
 form {
   display: block;
 
@@ -132,11 +133,33 @@ button:hover {
 }
 
 .image-entry {
-  p {
+  & p, & #deleteBtn {
     text-align: center;
     font-size: 13pt;
     color: #ddd;
     margin-top: 0px;
+    margin-bottom: 0px;
+    padding: 0px;
+  }
+
+  & p {
+    margin-bottom: -10px;
+  }
+
+  & form {
+    margin: 0px;
+    padding: 0px;
+  }
+
+  & #deleteBtn {
+    background: none;
+    padding: 0px;
+    border: 0px;
+    font-size: 11pt;
     margin-bottom: 40px;
+    &:hover {
+      color: white;
+      cursor: pointer;
+    }
   }
 }
