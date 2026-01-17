@@ -1,5 +1,5 @@
 import { createServer } from 'http';
-import fs, { cpSync, linkSync, mkdirSync, readdirSync, rmSync, symlinkSync, writeFileSync } from 'fs';
+import fs, { cpSync, mkdirSync, readdirSync, rmSync, symlinkSync, writeFileSync } from 'fs';
 import { stat, writeFile } from 'fs/promises';
 import { join } from 'path';
 import mime from 'mime';
@@ -11,6 +11,12 @@ const outDir = process.argv[2] ?? join(__dirname, './out');
 const hostname = process.argv[3] ?? '0.0.0.0';
 const port = +(process.argv[4] ?? 3000);
 const dev = process.env.NODE_ENV !== 'production';
+
+console.log("Starting...");
+console.log(`Output Directory: ${outDir}`);
+console.log(`Hostname: ${hostname}`);
+console.log(`Port: ${port}`);
+console.log(`Development Mode: ${dev}`);
 
 const imagesDir = join(outDir, "images");
 const deletedImagesDir = join(outDir, "deleted_images");
@@ -52,6 +58,7 @@ let templates = {
   index: "",
 }
 const loadTemplates = () => {
+  console.log("Reloading templates...");
   templates.index = fs.readFileSync(join(__dirname, 'index.html'), 'utf-8');
 }
 loadTemplates();
@@ -69,25 +76,31 @@ const regenerateStaticFiles = () => {
 
   console.log("REGENERATING", data)
 
-  let form = `
-    <form action="/api/save" method="POST" enctype="multipart/form-data">
-      <h2>Upload Screenshot</h2>
-      <label>
-        Server Name:<br/>
-        <input type="text" name="server" list="servers" required />
+  let server = `
+    <label for="server">
+        Server Name:
+      </label>
+      <br/>
+      <input type="text" name="server" list="servers" required />
         <datalist id="servers">
           ${data.servers.map(s => `<option value="${xssEscape(s.server)}">`).join('\n')}
         </datalist>
+      <br/>
+  `
+
+  let form = `
+    <form action="/api/save" method="POST" enctype="multipart/form-data">
+      <h3>Upload Screenshot</h3>
+      {{SERVER}}
+      <label for="description">
+        Description:
       </label>
       <br/>
-      <label>
-        Description:<br/>
-        <textarea name="description" rows="4" cols="50"></textarea>
-      </label>
+      <textarea name="description" rows="4" cols="50"></textarea>
       <br/>
-      <label>
-        Screenshot:<br/>
-        <input type="file" name="screenshot" accept="image/*" required />
+      <label for="screenshot" class="input">
+        Select Screenshot
+        <input type="file" name="screenshot" id="screenshot" style="display:none" accept="image/*" required />
       </label>
       <br/>
       <button type="submit">Upload</button>
@@ -106,29 +119,37 @@ const regenerateStaticFiles = () => {
 
     return `
       <section id="${xssEscape(server.slug)}">
+        <a href="#" class="back-to-top">Back</a>
         <h2>${xssEscape(server.server)}</h2>
         <div class="images-container">
           ${imagesHtml}
         </div>
+        ${form.replace('{{SERVER}}', '<input type="hidden" name="server" value="' + xssEscape(server.server) + '" />')}
       </section>
     `;
   }).join('\n');
 
   let serverList = data.servers.map(server => {
-    return `<li><a href="#${xssEscape(server.slug)}">${xssEscape(server.server)}</a></li>`;
+    return `<a href="#${xssEscape(server.slug)}"><li>${xssEscape(server.server)}</li></a>`;
   }).join('\n');
 
+  serverList = `<ul>\n${serverList}\n</ul>`;
+
+  if (data.servers.length === 0) {
+    serverList = '<p style="text-align:center">No servers yet</p>';
+  }
+
   let indexHtml = templates.index;
-  indexHtml = indexHtml.replaceAll('{{UPLOAD}}', form);
+  indexHtml = indexHtml.replaceAll('{{UPLOAD}}', form.replace('{{SERVER}}', server));
   indexHtml = indexHtml.replaceAll('{{SERVER_LIST}}', serverList);
   indexHtml = indexHtml.replaceAll('{{SERVERS}}', serversHtml);
-
-  console.log(indexHtml, templates.index);
 
   writeFileSync((join(outDir, 'index.html')), indexHtml);
 }
 
 const server = createServer(async (req, res) => {
+  if (dev) regenerateStaticFiles();
+
   const url = new URL(req.url, `http://localhost:3823`);
   if (req.method === 'GET' && !url.pathname.startsWith('/api/')) {
     let filePath = join(outDir, url.pathname.slice(1));
